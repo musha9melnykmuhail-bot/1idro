@@ -1,0 +1,64 @@
+-- UI.lua (Модуль Меню)
+local UIModule = {
+    Name = "UI",
+    Version = "1.0.0",
+    Enabled = false,
+    Window = nil,
+    Tabs = {},
+    CoreRef = nil
+}
+
+function UIModule.Init(Core)
+    UIModule.CoreRef = Core
+    
+    -- Подключаем UI-библиотеку (например, Thorium Lib или любую другую)
+    -- В качестве примера делаем обёртку под инициализацию окна
+    print("[UI Module] Инициализация графического интерфейса...")
+    
+    -- Подписываемся на события ядра
+    Core.On("ModuleRegistered", function(moduleName)
+        print("[UI Module] Обнаружен новый модуль для меню: " .. moduleName)
+    end)
+end
+
+-- Создание вкладки в меню
+function UIModule.CreateTab(tabName)
+    if UIModule.Tabs[tabName] then
+        return UIModule.Tabs[tabName]
+    end
+    
+    local Tab = {
+        Name = tabName,
+        Elements = {}
+    }
+    
+    function Tab:AddToggle(title, defaultValue, callback)
+        print(string.format("[UI] Создан Toggle: [%s] -> %s (дефолт: %s)", tabName, title, tostring(defaultValue)))
+        -- Здесь идет реальный код вызова создания Toggle в вашей UI-библиотеке
+        return {
+            Set = function(self, val)
+                if callback then callback(val) end
+            end
+        }
+    end
+
+    function Tab:AddSlider(title, min, max, default, callback)
+        print(string.format("[UI] Создан Slider: [%s] -> %s [%d..%d]", tabName, title, min, max))
+        return {
+            Set = function(self, val)
+                if callback then callback(val) end
+            end
+        }
+    end
+
+    UIModule.Tabs[tabName] = Tab
+    return Tab
+end
+
+function UIModule.Toggle(state)
+    UIModule.Enabled = state
+    print("[UI Module] Переключение видимости меню: " .. tostring(state))
+    -- Логика скрытия/открытия окна (CoreGui / ScreenGui)
+end
+
+return UIModule
