@@ -1,12 +1,12 @@
--- Core.lua
+-- idroMM2.lua (Основное Ядро)
 local Core = {
-    Version = "2.0.0",
-    BaseURL = "https://raw.githubusercontent.com/YourUsername/YourRepo/main/src/", -- Замени на свой URL
+    Version = "1.0.0",
     Modules = {},
-    Events = {}
+    Events = {},
+    BaseURL = "https://raw.githubusercontent.com/musha9melnykmuhail-bot/1idro/refs/heads/main/ModuleUI"
 }
 
--- Глобальная шина событий для связи модулей
+-- Глобальная система событий (Event Bus)
 function Core.On(eventName, callback)
     Core.Events[eventName] = Core.Events[eventName] or {}
     table.insert(Core.Events[eventName], callback)
@@ -20,47 +20,54 @@ function Core.Emit(eventName, ...)
     end
 end
 
--- Безопасная загрузка модуля
-function Core.LoadModule(moduleName)
-    local url = Core.BaseURL .. moduleName .. ".lua"
-    
+-- Функция загрузки модуля по прямому URL или имени
+function Core.LoadModule(moduleIdentifier)
+    local url = moduleIdentifier
+    if not moduleIdentifier:find("http") then
+        url = Core.BaseURL .. moduleIdentifier .. ".lua"
+    end
+
+    -- 1. HTTP Запрос
     local fetchSuccess, scriptContent = pcall(function()
         return game:HttpGet(url)
     end)
-    
-    if not fetchSuccess or not scriptContent then
-        warn("[Core] Ошибка скачивания модуля: " .. moduleName)
+
+    if not fetchSuccess or not scriptContent or scriptContent == "" then
+        warn("[Core Error] Не удалось скачать модуль: " .. tostring(moduleIdentifier))
         return nil
     end
 
+    -- 2. Компиляция
     local compileSuccess, moduleLoader = pcall(loadstring, scriptContent)
     if not compileSuccess or type(moduleLoader) ~= "function" then
-        warn("[Core] Синтаксическая ошибка в модуле " .. moduleName)
+        warn("[Core Error] Ошибка синтаксиса в модуле " .. tostring(moduleIdentifier))
         return nil
     end
 
+    -- 3. Выполнение
     local execSuccess, moduleData = pcall(moduleLoader)
     if not execSuccess or type(moduleData) ~= "table" then
-        warn("[Core] Модуль " .. moduleName .. " не вернул таблицу!")
+        warn("[Core Error] Модуль " .. tostring(moduleIdentifier) .. " не вернул таблицу!")
         return nil
     end
 
-    -- Сохраняем модуль в реестр
+    -- 4. Регистрация и Инициализация
+    local moduleName = moduleData.Name or moduleIdentifier
     Core.Modules[moduleName] = moduleData
 
-    -- Вызываем стандартный метод инициализации, если он есть
     if type(moduleData.Init) == "function" then
         local initSuccess, err = pcall(moduleData.Init, Core)
         if not initSuccess then
-            warn("[Core] Ошибка при Init() в модуле " .. moduleName .. ": " .. tostring(err))
+            warn("[Core Error] Ошибка при Init() в " .. moduleName .. ": " .. tostring(err))
         end
     end
 
-    print("[Core] Модуль успешно загружен и инициализирован: " .. moduleName)
+    Core.Emit("ModuleLoaded", moduleName, moduleData)
+    print("[Core] Модуль успешно подключен: " .. moduleName)
     return moduleData
 end
 
--- Безопасная выгрузка модуля
+-- Функция отгрузки модуля
 function Core.UnloadModule(moduleName)
     local module = Core.Modules[moduleName]
     if module then
@@ -68,82 +75,16 @@ function Core.UnloadModule(moduleName)
             pcall(module.Toggle, false)
         end
         Core.Modules[moduleName] = nil
+        Core.Emit("ModuleUnloaded", moduleName)
         print("[Core] Модуль выгружен: " .. moduleName)
     end
 end
 
-return Core-- Core.lua
-local Core = {
-    Version = "2.0.0",
-    BaseURL = "https://raw.githubusercontent.com/YourUsername/YourRepo/main/src/", -- Замени на свой URL
-    Modules = {},
-    Events = {}
-}
+-- Загружаем модуль UI при старте ядра
+local UIModule = Core.LoadModule("https://raw.githubusercontent.com/musha9melnykmuhail-bot/1idro/refs/heads/main/ModuleUI")
 
--- Глобальная шина событий для связи модулей
-function Core.On(eventName, callback)
-    Core.Events[eventName] = Core.Events[eventName] or {}
-    table.insert(Core.Events[eventName], callback)
-end
-
-function Core.Emit(eventName, ...)
-    if Core.Events[eventName] then
-        for _, callback in ipairs(Core.Events[eventName]) do
-            task.spawn(callback, ...)
-        end
-    end
-end
-
--- Безопасная загрузка модуля
-function Core.LoadModule(moduleName)
-    local url = Core.BaseURL .. moduleName .. ".lua"
-    
-    local fetchSuccess, scriptContent = pcall(function()
-        return game:HttpGet(url)
-    end)
-    
-    if not fetchSuccess or not scriptContent then
-        warn("[Core] Ошибка скачивания модуля: " .. moduleName)
-        return nil
-    end
-
-    local compileSuccess, moduleLoader = pcall(loadstring, scriptContent)
-    if not compileSuccess or type(moduleLoader) ~= "function" then
-        warn("[Core] Синтаксическая ошибка в модуле " .. moduleName)
-        return nil
-    end
-
-    local execSuccess, moduleData = pcall(moduleLoader)
-    if not execSuccess or type(moduleData) ~= "table" then
-        warn("[Core] Модуль " .. moduleName .. " не вернул таблицу!")
-        return nil
-    end
-
-    -- Сохраняем модуль в реестр
-    Core.Modules[moduleName] = moduleData
-
-    -- Вызываем стандартный метод инициализации, если он есть
-    if type(moduleData.Init) == "function" then
-        local initSuccess, err = pcall(moduleData.Init, Core)
-        if not initSuccess then
-            warn("[Core] Ошибка при Init() в модуле " .. moduleName .. ": " .. tostring(err))
-        end
-    end
-
-    print("[Core] Модуль успешно загружен и инициализирован: " .. moduleName)
-    return moduleData
-end
-
--- Безопасная выгрузка модуля
-function Core.UnloadModule(moduleName)
-    local module = Core.Modules[moduleName]
-    if module then
-        if type(module.Toggle) == "function" then
-            pcall(module.Toggle, false)
-        end
-        Core.Modules[moduleName] = nil
-        print("[Core] Модуль выгружен: " .. moduleName)
-    end
+if UIModule then
+    print("[Core] Система успешно инициализирована с модулем UI.")
 end
 
 return Core
