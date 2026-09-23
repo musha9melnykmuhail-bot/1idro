@@ -1,0 +1,35 @@
+-- 1. Загружаем основное Ядро
+local Core = loadstring(game:HttpGet("https://raw.githubusercontent.com/musha9melnykmuhail-bot/1idro/refs/heads/main/idroMM2"))()
+
+-- 2. Подгружаем модуль визуалов по твоей ссылке
+local Visual = Core.LoadModule("https://raw.githubusercontent.com/musha9melnykmuhail-bot/1idro/refs/heads/main/Visual")
+
+-- 3. Достаем подгруженное ядром меню
+local UI = Core.Modules["ModuleUI"]
+
+-- 4. Автоматически создаем вкладку в UI и связываем кнопки с настройками визуалов
+if UI and Visual then
+    local VisualTab = UI.CreateTab("Visuals")
+
+    VisualTab:AddToggle("Box ESP", false, function(state)
+        Visual.Settings.Boxes = state
+    end)
+
+    VisualTab:AddToggle("Tracers", false, function(state)
+        Visual.Settings.Tracers = state
+    end)
+
+    VisualTab:AddToggle("Player Names", false, function(state)
+        Visual.Settings.Names = state
+    end)
+
+    VisualTab:AddToggle("Health Bar", false, function(state)
+        Visual.Settings.Health = state
+    end)
+
+    VisualTab:AddToggle("Distance", false, function(state)
+        Visual.Settings.Distance = state
+    end)
+
+    print("[Main] Модуль Visuals успешно привязан к меню!")
+end
