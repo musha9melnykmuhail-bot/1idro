@@ -1,0 +1,164 @@
+-- ESP.lua (Модуль визуалов и логики ESP)
+local ESPModule = {
+    Name = "ESP",
+    Version = "1.0.0",
+    Enabled = true,
+    Settings = {
+        Boxes = false,
+        Tracers = false,
+        Names = false,
+        Health = false,
+        Distance = false
+    },
+    Cache = {}
+}
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local Camera = workspace.CurrentCamera
+local LocalPlayer = Players.LocalPlayer
+
+local function CreateDrawings(player)
+    if ESPModule.Cache[player] then return end
+
+    local box = Drawing.new("Square")
+    box.Thickness = 1
+    box.Filled = false
+    box.Color = Color3.fromRGB(255, 0, 0)
+    box.Visible = false
+
+    local tracer = Drawing.new("Line")
+    tracer.Thickness = 1
+    tracer.Color = Color3.fromRGB(255, 255, 0)
+    tracer.Visible = false
+
+    local name = Drawing.new("Text")
+    name.Size = 14
+    name.Center = true
+    name.Outline = true
+    name.Color = Color3.fromRGB(255, 255, 255)
+    name.Visible = false
+
+    local health = Drawing.new("Text")
+    health.Size = 12
+    health.Center = true
+    health.Outline = true
+    health.Color = Color3.fromRGB(0, 255, 0)
+    health.Visible = false
+
+    local dist = Drawing.new("Text")
+    dist.Size = 12
+    dist.Center = true
+    dist.Outline = true
+    dist.Color = Color3.fromRGB(200, 200, 200)
+    dist.Visible = false
+
+    ESPModule.Cache[player] = {
+        Box = box,
+        Tracer = tracer,
+        Name = name,
+        Health = health,
+        Distance = dist
+    }
+end
+
+local function RemoveDrawings(player)
+    if ESPModule.Cache[player] then
+        for _, obj in pairs(ESPModule.Cache[player]) do
+            obj:Remove()
+        end
+        ESPModule.Cache[player] = nil
+    end
+end
+
+function ESPModule.Init(Core)
+    print("[ESP Module] Запуск системы отрисовки...")
+
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer then CreateDrawings(player) end
+    end
+
+    Players.PlayerAdded:Connect(function(player)
+        if player ~= LocalPlayer then CreateDrawings(player) end
+    end)
+
+    Players.PlayerRemoving:Connect(RemoveDrawings)
+
+    RunService.RenderStepped:Connect(function()
+        for player, draw in pairs(ESPModule.Cache) do
+            local char = player.Character
+            local hrp = char and char:FindFirstChild("HumanoidRootPart")
+            local hum = char and char:FindFirstChildOfClass("Humanoid")
+
+            if hrp and hum and hum.Health > 0 then
+                local pos, onScreen = Camera:WorldToViewportPoint(hrp.Position)
+
+                if onScreen then
+                    local scale = 1000 / pos.Z
+                    local width = 30 * scale
+                    local height = 50 * scale
+
+                    -- 1. Boxes
+                    if ESPModule.Settings.Boxes then
+                        draw.Box.Size = Vector2.new(width, height)
+                        draw.Box.Position = Vector2.new(pos.X - width / 2, pos.Y - height / 2)
+                        draw.Box.Visible = true
+                    else
+                        draw.Box.Visible = false
+                    end
+
+                    -- 2. Tracers
+                    if ESPModule.Settings.Tracers then
+                        draw.Tracer.From = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y)
+                        draw.Tracer.To = Vector2.new(pos.X, pos.Y + height / 2)
+                        draw.Tracer.Visible = true
+                    else
+                        draw.Tracer.Visible = false
+                    end
+
+                    -- 3. Names
+                    if ESPModule.Settings.Names then
+                        draw.Name.Text = player.Name
+                        draw.Name.Position = Vector2.new(pos.X, pos.Y - height / 2 - 16)
+                        draw.Name.Visible = true
+                    else
+                        draw.Name.Visible = false
+                    end
+
+                    -- 4. Health
+                    if ESPModule.Settings.Health then
+                        draw.Health.Text = "HP: " .. math.floor(hum.Health)
+                        draw.Health.Position = Vector2.new(pos.X, pos.Y + height / 2 + 2)
+                        draw.Health.Visible = true
+                    else
+                        draw.Health.Visible = false
+                    end
+
+                    -- 5. Distance
+                    if ESPModule.Settings.Distance then
+                        local distance = math.floor((hrp.Position - Camera.CFrame.Position).Magnitude)
+                        draw.Distance.Text = distance .. "m"
+                        draw.Distance.Position = Vector2.new(pos.X, pos.Y + height / 2 + 16)
+                        draw.Distance.Visible = true
+                    else
+                        draw.Distance.Visible = false
+                    end
+                else
+                    draw.Box.Visible = false
+                    draw.Tracer.Visible = false
+                    draw.Name.Visible = false
+                    draw.Health.Visible = false
+                    draw.Distance.Visible = false
+                end
+            else
+                draw.Box.Visible = false
+                draw.Tracer.Visible = false
+                draw.Name.Visible = false
+                draw.Health.Visible = false
+                draw.Distance.Visible = false
+            end
+        end
+    end)
+end
+
+return ESPModule
