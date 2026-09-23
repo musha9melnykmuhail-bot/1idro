@@ -1,89 +1,192 @@
--- ModuleUI.lua (Модуль Меню)
+-- ModuleUI.lua (Полноценное меню на экране)
 local UIModule = {
     Name = "ModuleUI",
     Version = "1.0.0",
     Enabled = true,
     CoreRef = nil,
+    ScreenGui = nil,
+    MainFrame = nil,
+    TabContainer = nil,
+    ContentContainer = nil,
     Tabs = {},
-    Elements = {}
+    ActiveTab = nil
 }
 
--- Метод инициализации (вызывается Ядром)
-function UIModule.Init(Core)
-    UIModule.CoreRef = Core
-    print("[UI Module] Инициализация графического интерфейса...")
+local CoreGui = game:GetService("CoreGui")
+local UserInputService = game:GetService("UserInputService")
 
-    -- Подписываемся на события загрузки других модулей
-    Core.On("ModuleLoaded", function(name, moduleData)
-        if name ~= UIModule.Name then
-            print("[UI Module] Обнаружен новый модуль: " .. name .. ". Готов к интеграции UI.")
+-- Создание UI на экране
+function UIModule.CreateGui()
+    if UIModule.ScreenGui then UIModule.ScreenGui:Destroy() end
+
+    -- ScreenGui
+    local screen = Instance.new("ScreenGui")
+    screen.Name = "ThoriumUI_Core"
+    screen.ResetOnSpawn = false
+    
+    if syn and syn.protect_gui then
+        syn.protect_gui(screen)
+        screen.Parent = CoreGui
+    elseif gethui then
+        screen.Parent = gethui()
+    else
+        screen.Parent = CoreGui
+    end
+    UIModule.ScreenGui = screen
+
+    -- Главное Окно
+    local main = Instance.new("Frame")
+    main.Name = "MainFrame"
+    main.Size = UDim2.new(0, 500, 0, 320)
+    main.Position = UDim2.new(0.5, -250, 0.5, -160)
+    main.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
+    main.BorderSizePixel = 0
+    main.Active = true
+    main.Draggable = true
+    main.Parent = screen
+
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 6)
+    corner.Parent = main
+
+    -- Заголовок
+    local title = Instance.new("TextLabel")
+    title.Size = UDim2.new(1, -20, 0, 30)
+    title.Position = UDim2.new(0, 10, 0, 5)
+    title.Text = "THORIUM CORE"
+    title.TextColor3 = Color3.fromRGB(255, 255, 255)
+    title.TextXAlignment = Enum.TextXAlignment.Left
+    title.Font = Enum.Font.SourceSansBold
+    title.TextSize = 16
+    title.BackgroundTransparency = 1
+    title.Parent = main
+
+    -- Контейнер для вкладок (Слева)
+    local tabContainer = Instance.new("Frame")
+    tabContainer.Name = "TabContainer"
+    tabContainer.Size = UDim2.new(0, 120, 1, -45)
+    tabContainer.Position = UDim2.new(0, 10, 0, 35)
+    tabContainer.BackgroundColor3 = Color3.fromRGB(15, 15, 18)
+    tabContainer.BorderSizePixel = 0
+    tabContainer.Parent = main
+
+    local tabLayout = Instance.new("UIListLayout")
+    tabLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    tabLayout.Padding = UDim.new(0, 4)
+    tabLayout.Parent = tabContainer
+
+    UIModule.TabContainer = tabContainer
+
+    -- Контейнер для контента (Справа)
+    local contentContainer = Instance.new("Frame")
+    contentContainer.Name = "ContentContainer"
+    contentContainer.Size = UDim2.new(1, -150, 1, -45)
+    contentContainer.Position = UDim2.new(0, 140, 0, 35)
+    contentContainer.BackgroundColor3 = Color3.fromRGB(15, 15, 18)
+    contentContainer.BorderSizePixel = 0
+    contentContainer.Parent = main
+
+    UIModule.ContentContainer = contentContainer
+    UIModule.MainFrame = main
+
+    -- Открытие/Закрытие на кнопку Insert
+    UserInputService.InputBegan:Connect(function(input, gpe)
+        if not gpe and input.KeyCode == Enum.KeyCode.Insert then
+            UIModule.Toggle(not UIModule.Enabled)
         end
     end)
 end
 
--- Универсальный метод создания вкладок
-function UIModule.CreateTab(tabName)
-    if UIModule.Tabs[tabName] then
-        return UIModule.Tabs[tabName]
-    end
+function UIModule.Init(Core)
+    UIModule.CoreRef = Core
+    UIModule.CreateGui()
+    print("[UI Module] Графическое окно отрисовано на экране!")
+end
 
-    local Tab = {
-        Name = tabName,
-        Controls = {}
-    }
+-- Функция создания вкладки
+function UIModule.CreateTab(tabName)
+    if UIModule.Tabs[tabName] then return UIModule.Tabs[tabName] end
+
+    local tabBtn = Instance.new("TextButton")
+    tabBtn.Size = UDim2.new(1, 0, 0, 30)
+    tabBtn.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
+    tabBtn.Text = tabName
+    tabBtn.TextColor3 = Color3.fromRGB(180, 180, 180)
+    tabBtn.Font = Enum.Font.SourceSans
+    tabBtn.TextSize = 14
+    tabBtn.Parent = UIModule.TabContainer
+
+    local page = Instance.new("ScrollingFrame")
+    page.Size = UDim2.new(1, -10, 1, -10)
+    page.Position = UDim2.new(0, 5, 0, 5)
+    page.BackgroundTransparency = 1
+    page.Visible = false
+    page.ScrollBarThickness = 3
+    page.Parent = UIModule.ContentContainer
+
+    local pageLayout = Instance.new("UIListLayout")
+    pageLayout.Padding = UDim.new(0, 6)
+    pageLayout.Parent = page
+
+    local Tab = { Page = page, Button = tabBtn }
+
+    tabBtn.MouseButton1Click:Connect(function()
+        for _, t in pairs(UIModule.Tabs) do
+            t.Page.Visible = false
+            t.Button.TextColor3 = Color3.fromRGB(180, 180, 180)
+        end
+        page.Visible = true
+        tabBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    end)
+
+    if not UIModule.ActiveTab then
+        UIModule.ActiveTab = Tab
+        page.Visible = true
+        tabBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    end
 
     -- Добавление переключателя (Toggle)
     function Tab:AddToggle(title, defaultState, callback)
-        local ToggleData = {
-            Type = "Toggle",
-            Title = title,
-            State = defaultState or false,
-            Callback = callback
-        }
+        local toggleFrame = Instance.new("Frame")
+        toggleFrame.Size = UDim2.new(1, 0, 0, 30)
+        toggleFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
+        toggleFrame.Parent = page
 
-        table.insert(Tab.Controls, ToggleData)
-        print(string.format("[UI] [%s] Добавлен Toggle: %s (Состояние: %s)", tabName, title, tostring(ToggleData.State)))
+        local label = Instance.new("TextLabel")
+        label.Size = UDim2.new(1, -40, 1, 0)
+        label.Position = UDim2.new(0, 10, 0, 0)
+        label.Text = title
+        label.TextColor3 = Color3.fromRGB(255, 255, 255)
+        label.TextXAlignment = Enum.TextXAlignment.Left
+        label.BackgroundTransparency = 1
+        label.Font = Enum.Font.SourceSans
+        label.TextSize = 14
+        label.Parent = toggleFrame
 
-        -- Здесь вызывается код вашей библиотека интерфейса (ScreenGui/Thorium UI)
-        return {
-            Set = function(self, newState)
-                ToggleData.State = newState
-                if callback then callback(newState) end
-            end
-        }
-    end
+        local btn = Instance.new("TextButton")
+        btn.Size = UDim2.new(0, 20, 0, 20)
+        btn.Position = UDim2.new(1, -25, 0.5, -10)
+        btn.Text = ""
+        btn.BackgroundColor3 = defaultState and Color3.fromRGB(0, 170, 255) or Color3.fromRGB(50, 50, 60)
+        btn.Parent = toggleFrame
 
-    -- Добавление слайдера (Slider)
-    function Tab:AddSlider(title, min, max, defaultVal, callback)
-        local SliderData = {
-            Type = "Slider",
-            Title = title,
-            Min = min,
-            Max = max,
-            Value = defaultVal or min,
-            Callback = callback
-        }
-
-        table.insert(Tab.Controls, SliderData)
-        print(string.format("[UI] [%s] Добавлен Slider: %s [%d..%d] (Значение: %d)", tabName, title, min, max, SliderData.Value))
-
-        return {
-            Set = function(self, newVal)
-                SliderData.Value = newVal
-                if callback then callback(newVal) end
-            end
-        }
+        local state = defaultState or false
+        btn.MouseButton1Click:Connect(function()
+            state = not state
+            btn.BackgroundColor3 = state and Color3.fromRGB(0, 170, 255) or Color3.fromRGB(50, 50, 60)
+            if callback then callback(state) end
+        end)
     end
 
     UIModule.Tabs[tabName] = Tab
     return Tab
 end
 
--- Переключение видимости интерфейса
 function UIModule.Toggle(state)
     UIModule.Enabled = state
-    print("[UI Module] Видимость интерфейса: " .. tostring(state))
-    -- Код скрытия / отображения Gui
+    if UIModule.MainFrame then
+        UIModule.MainFrame.Visible = state
+    end
 end
 
 return UIModule
