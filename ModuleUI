@@ -1,9 +1,8 @@
--- ModuleUI.lua (Полноценное меню на экране)
+-- ModuleUI.lua
 local UIModule = {
     Name = "ModuleUI",
     Version = "1.0.0",
     Enabled = true,
-    CoreRef = nil,
     ScreenGui = nil,
     MainFrame = nil,
     TabContainer = nil,
@@ -15,11 +14,9 @@ local UIModule = {
 local CoreGui = game:GetService("CoreGui")
 local UserInputService = game:GetService("UserInputService")
 
--- Создание UI на экране
 function UIModule.CreateGui()
     if UIModule.ScreenGui then UIModule.ScreenGui:Destroy() end
 
-    -- ScreenGui
     local screen = Instance.new("ScreenGui")
     screen.Name = "ThoriumUI_Core"
     screen.ResetOnSpawn = false
@@ -34,7 +31,6 @@ function UIModule.CreateGui()
     end
     UIModule.ScreenGui = screen
 
-    -- Главное Окно
     local main = Instance.new("Frame")
     main.Name = "MainFrame"
     main.Size = UDim2.new(0, 500, 0, 320)
@@ -49,7 +45,6 @@ function UIModule.CreateGui()
     corner.CornerRadius = UDim.new(0, 6)
     corner.Parent = main
 
-    -- Заголовок
     local title = Instance.new("TextLabel")
     title.Size = UDim2.new(1, -20, 0, 30)
     title.Position = UDim2.new(0, 10, 0, 5)
@@ -61,9 +56,7 @@ function UIModule.CreateGui()
     title.BackgroundTransparency = 1
     title.Parent = main
 
-    -- Контейнер для вкладок (Слева)
     local tabContainer = Instance.new("Frame")
-    tabContainer.Name = "TabContainer"
     tabContainer.Size = UDim2.new(0, 120, 1, -45)
     tabContainer.Position = UDim2.new(0, 10, 0, 35)
     tabContainer.BackgroundColor3 = Color3.fromRGB(15, 15, 18)
@@ -71,15 +64,12 @@ function UIModule.CreateGui()
     tabContainer.Parent = main
 
     local tabLayout = Instance.new("UIListLayout")
-    tabLayout.SortOrder = Enum.SortOrder.LayoutOrder
     tabLayout.Padding = UDim.new(0, 4)
     tabLayout.Parent = tabContainer
 
     UIModule.TabContainer = tabContainer
 
-    -- Контейнер для контента (Справа)
     local contentContainer = Instance.new("Frame")
-    contentContainer.Name = "ContentContainer"
     contentContainer.Size = UDim2.new(1, -150, 1, -45)
     contentContainer.Position = UDim2.new(0, 140, 0, 35)
     contentContainer.BackgroundColor3 = Color3.fromRGB(15, 15, 18)
@@ -89,7 +79,6 @@ function UIModule.CreateGui()
     UIModule.ContentContainer = contentContainer
     UIModule.MainFrame = main
 
-    -- Открытие/Закрытие на кнопку Insert
     UserInputService.InputBegan:Connect(function(input, gpe)
         if not gpe and input.KeyCode == Enum.KeyCode.Insert then
             UIModule.Toggle(not UIModule.Enabled)
@@ -98,12 +87,9 @@ function UIModule.CreateGui()
 end
 
 function UIModule.Init(Core)
-    UIModule.CoreRef = Core
     UIModule.CreateGui()
-    print("[UI Module] Графическое окно отрисовано на экране!")
 end
 
--- Функция создания вкладки
 function UIModule.CreateTab(tabName)
     if UIModule.Tabs[tabName] then return UIModule.Tabs[tabName] end
 
@@ -145,7 +131,6 @@ function UIModule.CreateTab(tabName)
         tabBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
     end
 
-    -- Добавление переключателя (Toggle)
     function Tab:AddToggle(title, defaultState, callback)
         local toggleFrame = Instance.new("Frame")
         toggleFrame.Size = UDim2.new(1, 0, 0, 30)
