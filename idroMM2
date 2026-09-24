@@ -3,7 +3,7 @@ local Core = {
     Version = "2.0.0",
     Modules = {},
     Events = {},
-    BaseURL = "https://raw.githubusercontent.com/musha9melnykmuhail-bot/1idro/refs/heads/main/"
+    BaseURL = "https://raw.githubusercontent.com/musha9melnykmuhail-bot/1idro/refs/heads/main/ModuleUI"
 }
 
 local HttpService = game:GetService("HttpService")
