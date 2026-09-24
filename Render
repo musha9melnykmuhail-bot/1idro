@@ -1,29 +1,111 @@
--- Render — Связка со стильными секциями
+-- ====================================================================
+-- Thorium Lib v2 — Render Script (Neverlose Style)
+-- ====================================================================
+
 local ModuleUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/musha9melnykmuhail-bot/1idro/refs/heads/main/ModuleUI"))()
 
-if not ModuleUI then return end
+if not ModuleUI then 
+    warn("[Thorium UI] Ошибка загрузки библиотеки!")
+    return 
+end
 
--- 1. Вкладка COMBAT
-local CombatTab = ModuleUI.CreateTab("Combat")
-local MainCombat = CombatTab:CreateSection("Aimbot Settings")
-MainCombat:AddToggle("Enable Aimbot", false, function(s) print("Aimbot:", s) end)
-MainCombat:AddToggle("Silent Aim", false, function(s) print("Silent:", s) end)
-MainCombat:AddToggle("Wall Check", true, function(s) print("WallCheck:", s) end)
+-- ==========================================
+-- 1. ВКЛАДКА COMBAT
+-- ==========================================
+local CombatTab = ModuleUI:CreateTab("Combat", "rbxassetid://7539983773")
 
-local TargetSec = CombatTab:CreateSection("Targeting")
-TargetSec:AddToggle("Draw FOV Circle", false, function(s) print("FOV:", s) end)
-TargetSec:AddToggle("Target Lock", false, function(s) print("Lock:", s) end)
+-- Левая колонка: Основной Аимбот
+local MainCombat = CombatTab:CreateSection("Aimbot Settings", "Left")
+MainCombat:AddToggle("Enable Aimbot", false, function(state)
+    print("[Thorium] Aimbot:", state)
+end)
 
--- 2. Вкладка VISUALS
-local VisualTab = ModuleUI.CreateTab("Visuals")
-local ESPMain = VisualTab:CreateSection("Player ESP")
-ESPMain:AddToggle("Box ESP", false, function(s) print("Box:", s) end)
-ESPMain:AddToggle("Chams Highlight", false, function(s) print("Chams:", s) end)
-ESPMain:AddToggle("Tracers", false, function(s) print("Tracers:", s) end)
+MainCombat:AddToggle("Silent Aim", false, function(state)
+    print("[Thorium] Silent Aim:", state)
+end)
 
-local ESPInfo = VisualTab:CreateSection("Extra Information")
-ESPInfo:AddToggle("Display Names", false, function(s) print("Names:", s) end)
-ESPInfo:AddToggle("Health Bar", false, function(s) print("Health:", s) end)
-ESPInfo:AddToggle("Distance", false, function(s) print("Distance:", s) end)
+MainCombat:AddToggle("Wall Check", true, function(state)
+    print("[Thorium] Wall Check:", state)
+end)
 
-print("[Thorium UI] Запущено в стиле Neverlose!")
+MainCombat:AddSlider("Aimbot Smoothness", 1, 20, 5, function(val)
+    print("[Thorium] Smoothness:", val)
+end)
+
+MainCombat:AddDropdown("Target Bone", {"Head", "Torso", "HumanoidRootPart"}, "Head", function(selected)
+    print("[Thorium] Target Bone:", selected)
+end)
+
+-- Правая колонка: Таргетинг и FOV
+local TargetSec = CombatTab:CreateSection("Targeting & FOV", "Right")
+TargetSec:AddToggle("Draw FOV Circle", false, function(state)
+    print("[Thorium] Draw FOV:", state)
+end)
+
+TargetSec:AddSlider("FOV Radius", 30, 500, 120, function(val)
+    print("[Thorium] FOV Radius:", val)
+end)
+
+TargetSec:AddToggle("Target Lock", false, function(state)
+    print("[Thorium] Target Lock:", state)
+end)
+
+-- ==========================================
+-- 2. ВКЛАДКА VISUALS
+-- ==========================================
+local VisualTab = ModuleUI:CreateTab("Visuals", "rbxassetid://16369898431")
+
+-- Левая колонка: Player ESP
+local ESPMain = VisualTab:CreateSection("Player ESP", "Left")
+ESPMain:AddToggle("Box ESP", false, function(state)
+    print("[Thorium] Box ESP:", state)
+end)
+
+ESPMain:AddToggle("Chams Highlight", false, function(state)
+    print("[Thorium] Chams:", state)
+end)
+
+ESPMain:AddToggle("Tracers", false, function(state)
+    print("[Thorium] Tracers:", state)
+end)
+
+ESPMain:AddSlider("Max Render Distance", 100, 2500, 1000, function(val)
+    print("[Thorium] ESP Distance:", val)
+end)
+
+-- Правая колонка: Дополнительная информация
+local ESPInfo = VisualTab:CreateSection("Extra Information", "Right")
+ESPInfo:AddToggle("Display Names", false, function(state)
+    print("[Thorium] Display Names:", state)
+end)
+
+ESPInfo:AddToggle("Health Bar", false, function(state)
+    print("[Thorium] Health Bar:", state)
+end)
+
+ESPInfo:AddToggle("Distance", false, function(state)
+    print("[Thorium] Distance Info:", state)
+end)
+
+-- ==========================================
+-- 3. ВКЛАДКА SETTINGS
+-- ==========================================
+local SettingsTab = ModuleUI:CreateTab("Settings", "rbxassetid://11956055886")
+
+local MenuSec = SettingsTab:CreateSection("Menu Config", "Left")
+MenuSec:AddSlider("UI Scale", 75, 125, 100, function(scaleVal)
+    local mainFrame = game:GetService("CoreGui"):FindFirstChild("Thoriumv2Gui") 
+        or game:GetService("Players").LocalPlayer.PlayerGui:FindFirstChild("Thoriumv2Gui")
+    if mainFrame and mainFrame:FindFirstChild("MainFrame") then
+        local uiScale = mainFrame.MainFrame:FindFirstChildOfClass("UIScale")
+        if uiScale then uiScale.Scale = scaleVal / 100 end
+    end
+end)
+
+MenuSec:AddButton("Unload Interface", function()
+    if getgenv().ThoriumLib_Cleanup then
+        getgenv().ThoriumLib_Cleanup()
+    end
+end)
+
+print("[Thorium UI] Успешно запущено в стиле Neverlose!")
