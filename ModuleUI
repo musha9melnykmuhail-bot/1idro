@@ -1,19 +1,18 @@
--- ModuleUI.lua — Автономный UI в стиле Neverlose
+-- ModuleUI.lua — Премиальный интерфейс в стиле Neverlose / Primordial
 local ModuleUI = {}
 local CoreGui = game:GetService("CoreGui")
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 
--- Удаляем старое меню, если оно было открыто
-if CoreGui:FindFirstChild("ThoriumNeverlose") then
-    CoreGui.ThoriumNeverlose:Destroy()
+-- Удаляем старый UI если он есть в памяти
+if CoreGui:FindFirstChild("ThoriumUI_NL") then
+    CoreGui.ThoriumUI_NL:Destroy()
 end
 
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "ThoriumNeverlose"
+ScreenGui.Name = "ThoriumUI_NL"
 ScreenGui.ResetOnSpawn = false
 
--- Безопасная привязка к CoreGui
 if gethui then
     ScreenGui.Parent = gethui()
 elseif syn and syn.protect_gui then
@@ -23,56 +22,63 @@ else
     ScreenGui.Parent = CoreGui
 end
 
--- Главное окно
+-- Главный контейнер
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
-MainFrame.Size = UDim2.new(0, 560, 0, 360)
-MainFrame.Position = UDim2.new(0.5, -280, 0.5, -180)
-MainFrame.BackgroundColor3 = Color3.fromRGB(11, 14, 20)
+MainFrame.Size = UDim2.new(0, 620, 0, 400)
+MainFrame.Position = UDim2.new(0.5, -310, 0.5, -200)
+MainFrame.BackgroundColor3 = Color3.fromRGB(11, 13, 18)
 MainFrame.BorderSizePixel = 0
 MainFrame.Active = true
 MainFrame.Draggable = true
 MainFrame.Parent = ScreenGui
 
 local MainCorner = Instance.new("UICorner")
-MainCorner.CornerRadius = UDim.new(0, 10)
+MainCorner.CornerRadius = UDim.new(0, 8)
 MainCorner.Parent = MainFrame
 
--- Боковая панель
+-- Внешняя тонкая обводка
+local MainStroke = Instance.new("UIStroke")
+MainStroke.Color = Color3.fromRGB(22, 28, 38)
+MainStroke.Thickness = 1
+MainStroke.Parent = MainFrame
+
+-- Левая панель навигации (Sidebar)
 local Sidebar = Instance.new("Frame")
-Sidebar.Size = UDim2.new(0, 140, 1, 0)
-Sidebar.BackgroundColor3 = Color3.fromRGB(8, 10, 15)
+Sidebar.Size = UDim2.new(0, 150, 1, 0)
+Sidebar.BackgroundColor3 = Color3.fromRGB(8, 9, 13)
 Sidebar.BorderSizePixel = 0
 Sidebar.Parent = MainFrame
 
 local SideCorner = Instance.new("UICorner")
-SideCorner.CornerRadius = UDim.new(0, 10)
+SideCorner.CornerRadius = UDim.new(0, 8)
 SideCorner.Parent = Sidebar
 
+-- Логотип
 local Logo = Instance.new("TextLabel")
 Logo.Text = "THORIUM"
-Logo.Size = UDim2.new(1, 0, 0, 45)
+Logo.Size = UDim2.new(1, 0, 0, 50)
 Logo.BackgroundTransparency = 1
-Logo.TextColor3 = Color3.fromRGB(0, 180, 255)
+Logo.TextColor3 = Color3.fromRGB(0, 162, 255)
 Logo.Font = Enum.Font.GothamBold
 Logo.TextSize = 16
 Logo.Parent = Sidebar
 
 local TabHolder = Instance.new("Frame")
-TabHolder.Size = UDim2.new(1, -16, 1, -55)
-TabHolder.Position = UDim2.new(0, 8, 0, 50)
+TabHolder.Size = UDim2.new(1, -16, 1, -60)
+TabHolder.Position = UDim2.new(0, 8, 0, 55)
 TabHolder.BackgroundTransparency = 1
 TabHolder.Parent = Sidebar
 
 local TabList = Instance.new("UIListLayout")
 TabList.SortOrder = Enum.SortOrder.LayoutOrder
-TabList.Padding = UDim.new(0, 6)
+TabList.Padding = UDim.new(0, 4)
 TabList.Parent = TabHolder
 
--- Контейнер для страниц
+-- Область страниц
 local PageHolder = Instance.new("Frame")
-PageHolder.Size = UDim2.new(1, -155, 1, -20)
-PageHolder.Position = UDim2.new(0, 148, 0, 10)
+PageHolder.Size = UDim2.new(1, -165, 1, -20)
+PageHolder.Position = UDim2.new(0, 158, 0, 10)
 PageHolder.BackgroundTransparency = 1
 PageHolder.Parent = MainFrame
 
@@ -84,121 +90,164 @@ function ModuleUI.CreateTab(tabName)
     Page.BackgroundTransparency = 1
     Page.BorderSizePixel = 0
     Page.ScrollBarThickness = 2
-    Page.ScrollBarImageColor3 = Color3.fromRGB(0, 180, 255)
+    Page.ScrollBarImageColor3 = Color3.fromRGB(0, 162, 255)
     Page.Visible = FirstTab
     Page.Parent = PageHolder
 
     local PageList = Instance.new("UIListLayout")
     PageList.SortOrder = Enum.SortOrder.LayoutOrder
-    PageList.Padding = UDim.new(0, 8)
+    PageList.Padding = UDim.new(0, 10)
     PageList.Parent = Page
 
+    -- Кнопка переключения вкладки
     local TabBtn = Instance.new("TextButton")
-    TabBtn.Size = UDim2.new(1, 0, 0, 32)
-    TabBtn.BackgroundColor3 = FirstTab and Color3.fromRGB(15, 22, 32) or Color3.fromRGB(11, 14, 20)
+    TabBtn.Size = UDim2.new(1, 0, 0, 34)
+    TabBtn.BackgroundColor3 = FirstTab and Color3.fromRGB(15, 19, 28) or Color3.fromRGB(11, 13, 18)
     TabBtn.Text = "  " .. tabName
-    TabBtn.TextColor3 = FirstTab and Color3.fromRGB(0, 180, 255) or Color3.fromRGB(120, 130, 145)
+    TabBtn.TextColor3 = FirstTab and Color3.fromRGB(0, 162, 255) or Color3.fromRGB(110, 120, 135)
     TabBtn.Font = Enum.Font.GothamMedium
     TabBtn.TextSize = 13
     TabBtn.TextXAlignment = Enum.TextXAlignment.Left
     TabBtn.Parent = TabHolder
 
     local BtnCorner = Instance.new("UICorner")
-    BtnCorner.CornerRadius = UDim.new(0, 8)
+    BtnCorner.CornerRadius = UDim.new(0, 6)
     BtnCorner.Parent = TabBtn
 
     TabBtn.MouseButton1Click:Connect(function()
         for _, p in pairs(PageHolder:GetChildren()) do
-            if p:IsA("ScrollingFrame") then
-                p.Visible = false
-            end
+            if p:IsA("ScrollingFrame") then p.Visible = false end
         end
         for _, b in pairs(TabHolder:GetChildren()) do
             if b:IsA("TextButton") then
-                b.BackgroundColor3 = Color3.fromRGB(11, 14, 20)
-                b.TextColor3 = Color3.fromRGB(120, 130, 145)
+                TweenService:Create(b, TweenInfo.new(0.15), {
+                    BackgroundColor3 = Color3.fromRGB(11, 13, 18),
+                    TextColor3 = Color3.fromRGB(110, 120, 135)
+                }):Play()
             end
         end
         Page.Visible = true
-        TabBtn.BackgroundColor3 = Color3.fromRGB(15, 22, 32)
-        TabBtn.TextColor3 = Color3.fromRGB(0, 180, 255)
+        TweenService:Create(TabBtn, TweenInfo.new(0.15), {
+            BackgroundColor3 = Color3.fromRGB(15, 19, 28),
+            TextColor3 = Color3.fromRGB(0, 162, 255)
+        }):Play()
     end)
 
     FirstTab = false
 
     local TabApi = {}
 
-    function TabApi:AddToggle(text, default, callback)
-        local Enabled = default or false
+    -- Создание секции (блок карточки для группировки)
+    function TabApi:CreateSection(sectionName)
+        local Section = Instance.new("Frame")
+        Section.Size = UDim2.new(1, -6, 0, 30) -- Динамически расширяется
+        Section.BackgroundColor3 = Color3.fromRGB(14, 17, 24)
+        Section.BorderSizePixel = 0
+        Section.Parent = Page
 
-        local ToggleFrame = Instance.new("Frame")
-        ToggleFrame.Size = UDim2.new(1, -8, 0, 36)
-        ToggleFrame.BackgroundColor3 = Color3.fromRGB(14, 18, 26)
-        ToggleFrame.BorderSizePixel = 0
-        ToggleFrame.Parent = Page
+        local SecCorner = Instance.new("UICorner")
+        SecCorner.CornerRadius = UDim.new(0, 6)
+        SecCorner.Parent = Section
 
-        local ToggleCorner = Instance.new("UICorner")
-        ToggleCorner.CornerRadius = UDim.new(0, 8)
-        ToggleCorner.Parent = ToggleFrame
+        local SecStroke = Instance.new("UIStroke")
+        SecStroke.Color = Color3.fromRGB(22, 28, 38)
+        SecStroke.Thickness = 1
+        SecStroke.Parent = Section
 
-        local Label = Instance.new("TextLabel")
-        Label.Text = "  " .. text
-        Label.Size = UDim2.new(0.7, 0, 1, 0)
-        Label.BackgroundTransparency = 1
-        Label.TextColor3 = Color3.fromRGB(200, 210, 225)
-        Label.TextXAlignment = Enum.TextXAlignment.Left
-        Label.Font = Enum.Font.Gotham
-        Label.TextSize = 13
-        Label.Parent = ToggleFrame
+        local SecTitle = Instance.new("TextLabel")
+        SecTitle.Text = sectionName:upper()
+        SecTitle.Size = UDim2.new(1, -20, 0, 25)
+        SecTitle.Position = UDim2.new(0, 10, 0, 2)
+        SecTitle.BackgroundTransparency = 1
+        SecTitle.TextColor3 = Color3.fromRGB(0, 162, 255)
+        SecTitle.Font = Enum.Font.GothamBold
+        SecTitle.TextSize = 11
+        SecTitle.TextXAlignment = Enum.TextXAlignment.Left
+        SecTitle.Parent = Section
 
-        local Switch = Instance.new("Frame")
-        Switch.Size = UDim2.new(0, 34, 0, 18)
-        Switch.Position = UDim2.new(1, -42, 0.5, -9)
-        Switch.BackgroundColor3 = Enabled and Color3.fromRGB(0, 180, 255) or Color3.fromRGB(25, 32, 45)
-        Switch.Parent = ToggleFrame
+        local Container = Instance.new("Frame")
+        Container.Size = UDim2.new(1, -20, 1, -30)
+        Container.Position = UDim2.new(0, 10, 0, 25)
+        Container.BackgroundTransparency = 1
+        Container.Parent = Section
 
-        local SwitchCorner = Instance.new("UICorner")
-        SwitchCorner.CornerRadius = UDim.new(1, 0)
-        SwitchCorner.Parent = Switch
+        local ContainerList = Instance.new("UIListLayout")
+        ContainerList.SortOrder = Enum.SortOrder.LayoutOrder
+        ContainerList.Padding = UDim.new(0, 6)
+        ContainerList.Parent = Container
 
-        local Dot = Instance.new("Frame")
-        Dot.Size = UDim2.new(0, 14, 0, 14)
-        Dot.Position = Enabled and UDim2.new(1, -16, 0.5, -7) or UDim2.new(0, 2, 0.5, -7)
-        Dot.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-        Dot.Parent = Switch
-
-        local DotCorner = Instance.new("UICorner")
-        DotCorner.CornerRadius = UDim.new(1, 0)
-        DotCorner.Parent = Dot
-
-        local Btn = Instance.new("TextButton")
-        Btn.Size = UDim2.new(1, 0, 1, 0)
-        Btn.BackgroundTransparency = 1
-        Btn.Text = ""
-        Btn.Parent = ToggleFrame
-
-        Btn.MouseButton1Click:Connect(function()
-            Enabled = not Enabled
-            
-            -- Анимация переключателя
-            TweenService:Create(Switch, TweenInfo.new(0.15), {
-                BackgroundColor3 = Enabled and Color3.fromRGB(0, 180, 255) or Color3.fromRGB(25, 32, 45)
-            }):Play()
-            
-            TweenService:Create(Dot, TweenInfo.new(0.15), {
-                Position = Enabled and UDim2.new(1, -16, 0.5, -7) or UDim2.new(0, 2, 0.5, -7)
-            }):Play()
-
-            if callback then
-                callback(Enabled)
-            end
+        -- Автоматический пересчёт высоты карточки
+        ContainerList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+            Section.Size = UDim2.new(1, -6, 0, ContainerList.AbsoluteContentSize.Y + 35)
         end)
+
+        local SecApi = {}
+
+        -- Добавление тумблера внутрь карточки
+        function SecApi:AddToggle(text, default, callback)
+            local Enabled = default or false
+
+            local Toggle = Instance.new("Frame")
+            Toggle.Size = UDim2.new(1, 0, 0, 26)
+            Toggle.BackgroundTransparency = 1
+            Toggle.Parent = Container
+
+            local Label = Instance.new("TextLabel")
+            Label.Text = text
+            Label.Size = UDim2.new(0.7, 0, 1, 0)
+            Label.BackgroundTransparency = 1
+            Label.TextColor3 = Color3.fromRGB(190, 200, 215)
+            Label.TextXAlignment = Enum.TextXAlignment.Left
+            Label.Font = Enum.Font.Gotham
+            Label.TextSize = 13
+            Label.Parent = Toggle
+
+            local Switch = Instance.new("Frame")
+            Switch.Size = UDim2.new(0, 32, 0, 16)
+            Switch.Position = UDim2.new(1, -32, 0.5, -8)
+            Switch.BackgroundColor3 = Enabled and Color3.fromRGB(0, 162, 255) or Color3.fromRGB(22, 28, 38)
+            Switch.Parent = Toggle
+
+            local SwitchCorner = Instance.new("UICorner")
+            SwitchCorner.CornerRadius = UDim.new(1, 0)
+            SwitchCorner.Parent = Switch
+
+            local Dot = Instance.new("Frame")
+            Dot.Size = UDim2.new(0, 12, 0, 12)
+            Dot.Position = Enabled and UDim2.new(1, -14, 0.5, -6) or UDim2.new(0, 2, 0.5, -6)
+            Dot.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+            Dot.Parent = Switch
+
+            local DotCorner = Instance.new("UICorner")
+            DotCorner.CornerRadius = UDim.new(1, 0)
+            DotCorner.Parent = Dot
+
+            local ClickBtn = Instance.new("TextButton")
+            ClickBtn.Size = UDim2.new(1, 0, 1, 0)
+            ClickBtn.BackgroundTransparency = 1
+            ClickBtn.Text = ""
+            ClickBtn.Parent = Toggle
+
+            ClickBtn.MouseButton1Click:Connect(function()
+                Enabled = not Enabled
+                TweenService:Create(Switch, TweenInfo.new(0.15), {
+                    BackgroundColor3 = Enabled and Color3.fromRGB(0, 162, 255) or Color3.fromRGB(22, 28, 38)
+                }):Play()
+                TweenService:Create(Dot, TweenInfo.new(0.15), {
+                    Position = Enabled and UDim2.new(1, -14, 0.5, -6) or UDim2.new(0, 2, 0.5, -6)
+                }):Play()
+
+                if callback then callback(Enabled) end
+            end)
+        end
+
+        return SecApi
     end
 
     return TabApi
 end
 
--- Переключение отображения по клавише Insert
+-- Закрытие/открытие на клавишу Insert
 UserInputService.InputBegan:Connect(function(input, gpe)
     if not gpe and input.KeyCode == Enum.KeyCode.Insert then
         MainFrame.Visible = not MainFrame.Visible
