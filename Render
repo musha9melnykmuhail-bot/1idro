@@ -1,43 +1,29 @@
--- Render — Связующий лоадер для Thorium
+-- Render — Связка со стильными секциями
 local ModuleUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/musha9melnykmuhail-bot/1idro/refs/heads/main/ModuleUI"))()
 
-if not ModuleUI then
-    return warn("[Thorium] Ошибка: Не удалось загрузить ModuleUI!")
-end
+if not ModuleUI then return end
 
-print("[Thorium] Инициализация интерфейса...")
-
--- 1. Создаем вкладку Combat
+-- 1. Вкладка COMBAT
 local CombatTab = ModuleUI.CreateTab("Combat")
-CombatTab:AddToggle("Aimbot (Hold RMB)", false, function(state)
-    print("Aimbot:", state)
-end)
-CombatTab:AddToggle("Silent Aim", false, function(state)
-    print("Silent Aim:", state)
-end)
-CombatTab:AddToggle("Draw FOV Circle", false, function(state)
-    print("FOV Circle:", state)
-end)
-CombatTab:AddToggle("Wall Check", false, function(state)
-    print("Wall Check:", state)
-end)
+local MainCombat = CombatTab:CreateSection("Aimbot Settings")
+MainCombat:AddToggle("Enable Aimbot", false, function(s) print("Aimbot:", s) end)
+MainCombat:AddToggle("Silent Aim", false, function(s) print("Silent:", s) end)
+MainCombat:AddToggle("Wall Check", true, function(s) print("WallCheck:", s) end)
 
--- 2. Создаем вкладку Visuals
+local TargetSec = CombatTab:CreateSection("Targeting")
+TargetSec:AddToggle("Draw FOV Circle", false, function(s) print("FOV:", s) end)
+TargetSec:AddToggle("Target Lock", false, function(s) print("Lock:", s) end)
+
+-- 2. Вкладка VISUALS
 local VisualTab = ModuleUI.CreateTab("Visuals")
-VisualTab:AddToggle("Box ESP", false, function(state)
-    print("Box ESP:", state)
-end)
-VisualTab:AddToggle("Chams Highlight", false, function(state)
-    print("Chams Highlight:", state)
-end)
-VisualTab:AddToggle("Tracers", false, function(state)
-    print("Tracers:", state)
-end)
-VisualTab:AddToggle("Player Names", false, function(state)
-    print("Player Names:", state)
-end)
-VisualTab:AddToggle("Health Bar", false, function(state)
-    print("Health Bar:", state)
-end)
+local ESPMain = VisualTab:CreateSection("Player ESP")
+ESPMain:AddToggle("Box ESP", false, function(s) print("Box:", s) end)
+ESPMain:AddToggle("Chams Highlight", false, function(s) print("Chams:", s) end)
+ESPMain:AddToggle("Tracers", false, function(s) print("Tracers:", s) end)
 
-print("[Thorium] Меню успешно открыто! Нажмите INSERT для скрытия/показа.")
+local ESPInfo = VisualTab:CreateSection("Extra Information")
+ESPInfo:AddToggle("Display Names", false, function(s) print("Names:", s) end)
+ESPInfo:AddToggle("Health Bar", false, function(s) print("Health:", s) end)
+ESPInfo:AddToggle("Distance", false, function(s) print("Distance:", s) end)
+
+print("[Thorium UI] Запущено в стиле Neverlose!")
