@@ -1,0 +1,71 @@
+-- Combat.lua — Модуль боевых функций
+local CombatModule = {}
+
+CombatModule.Settings = {
+    Aimbot = false,
+    SilentAim = false,
+    ShowFOV = false,
+    FOVRadius = 120,
+    WallCheck = true,
+    TargetLock = false
+}
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local LocalPlayer = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
+
+-- Круг FOV на Drawing API
+local FOVCircle = Drawing.new("Circle")
+FOVCircle.Thickness = 1.5
+FOVCircle.Color = Color3.fromRGB(0, 200, 255)
+FOVCircle.Filled = false
+FOVCircle.Transparency = 0.8
+FOVCircle.Visible = false
+
+-- Поиск ближайшей цели в пределах FOV
+local function GetClosestPlayer()
+    local closest = nil
+    local shortestDist = CombatModule.Settings.FOVRadius
+    local mousePos = UserInputService:GetMouseLocation()
+
+    for _, plr in pairs(Players:GetPlayers()) do
+        if plr ~= LocalPlayer and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+            local hum = plr.Character:FindFirstChildOfClass("Humanoid")
+            if hum and hum.Health > 0 then
+                local pos, onScreen = Camera:WorldToViewportPoint(plr.Character.HumanoidRootPart.Position)
+                if onScreen then
+                    local dist = (Vector2.new(pos.X, pos.Y) - mousePos).Magnitude
+                    if dist < shortestDist then
+                        shortestDist = dist
+                        closest = plr
+                    end
+                end
+            end
+        end
+    end
+    return closest
+end
+
+function CombatModule.Init()
+    -- Отрисовка FOV и логика Аимбота
+    RunService.RenderStepped:Connect(function()
+        local mousePos = UserInputService:GetMouseLocation()
+        FOVCircle.Position = mousePos
+        FOVCircle.Radius = CombatModule.Settings.FOVRadius
+        FOVCircle.Visible = CombatModule.Settings.ShowFOV
+
+        -- Легкий Smooth Aimbot при зажатой ПКМ
+        if CombatModule.Settings.Aimbot and UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton2) then
+            local target = GetClosestPlayer()
+            if target and target.Character and target.Character:FindFirstChild("Head") then
+                local headPos = target.Character.Head.Position
+                local camPos = Camera.CFrame.Position
+                Camera.CFrame = Camera.CFrame:Lerp(CFrame.new(camPos, headPos), 0.2)
+            end
+        end
+    end)
+end
+
+return CombatModule
