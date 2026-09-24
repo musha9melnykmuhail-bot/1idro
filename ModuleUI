@@ -1,12 +1,19 @@
--- ModuleUI.lua — Neverlose Style UI
+-- ModuleUI.lua — Автономный UI в стиле Neverlose
 local ModuleUI = {}
 local CoreGui = game:GetService("CoreGui")
 local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+
+-- Удаляем старое меню, если оно было открыто
+if CoreGui:FindFirstChild("ThoriumNeverlose") then
+    CoreGui.ThoriumNeverlose:Destroy()
+end
 
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "ThoriumNeverlose"
 ScreenGui.ResetOnSpawn = false
 
+-- Безопасная привязка к CoreGui
 if gethui then
     ScreenGui.Parent = gethui()
 elseif syn and syn.protect_gui then
@@ -16,11 +23,11 @@ else
     ScreenGui.Parent = CoreGui
 end
 
--- Главное окно в стиле Neverlose
+-- Главное окно
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
-MainFrame.Size = UDim2.new(0, 580, 0, 380)
-MainFrame.Position = UDim2.new(0.5, -290, 0.5, -190)
+MainFrame.Size = UDim2.new(0, 560, 0, 360)
+MainFrame.Position = UDim2.new(0.5, -280, 0.5, -180)
 MainFrame.BackgroundColor3 = Color3.fromRGB(11, 14, 20)
 MainFrame.BorderSizePixel = 0
 MainFrame.Active = true
@@ -31,9 +38,9 @@ local MainCorner = Instance.new("UICorner")
 MainCorner.CornerRadius = UDim.new(0, 10)
 MainCorner.Parent = MainFrame
 
--- Боковая панель (Sidebar)
+-- Боковая панель
 local Sidebar = Instance.new("Frame")
-Sidebar.Size = UDim2.new(0, 150, 1, 0)
+Sidebar.Size = UDim2.new(0, 140, 1, 0)
 Sidebar.BackgroundColor3 = Color3.fromRGB(8, 10, 15)
 Sidebar.BorderSizePixel = 0
 Sidebar.Parent = MainFrame
@@ -43,7 +50,7 @@ SideCorner.CornerRadius = UDim.new(0, 10)
 SideCorner.Parent = Sidebar
 
 local Logo = Instance.new("TextLabel")
-Logo.Text = "NEVERLOSE"
+Logo.Text = "THORIUM"
 Logo.Size = UDim2.new(1, 0, 0, 45)
 Logo.BackgroundTransparency = 1
 Logo.TextColor3 = Color3.fromRGB(0, 180, 255)
@@ -62,10 +69,10 @@ TabList.SortOrder = Enum.SortOrder.LayoutOrder
 TabList.Padding = UDim.new(0, 6)
 TabList.Parent = TabHolder
 
--- Контейнер страниц
+-- Контейнер для страниц
 local PageHolder = Instance.new("Frame")
-PageHolder.Size = UDim2.new(1, -165, 1, -20)
-PageHolder.Position = UDim2.new(0, 158, 0, 10)
+PageHolder.Size = UDim2.new(1, -155, 1, -20)
+PageHolder.Position = UDim2.new(0, 148, 0, 10)
 PageHolder.BackgroundTransparency = 1
 PageHolder.Parent = MainFrame
 
@@ -102,7 +109,9 @@ function ModuleUI.CreateTab(tabName)
 
     TabBtn.MouseButton1Click:Connect(function()
         for _, p in pairs(PageHolder:GetChildren()) do
-            p.Visible = false
+            if p:IsA("ScrollingFrame") then
+                p.Visible = false
+            end
         end
         for _, b in pairs(TabHolder:GetChildren()) do
             if b:IsA("TextButton") then
@@ -170,15 +179,26 @@ function ModuleUI.CreateTab(tabName)
 
         Btn.MouseButton1Click:Connect(function()
             Enabled = not Enabled
-            Switch.BackgroundColor3 = Enabled and Color3.fromRGB(0, 180, 255) or Color3.fromRGB(25, 32, 45)
-            Dot.Position = Enabled and UDim2.new(1, -16, 0.5, -7) or UDim2.new(0, 2, 0.5, -7)
-            callback(Enabled)
+            
+            -- Анимация переключателя
+            TweenService:Create(Switch, TweenInfo.new(0.15), {
+                BackgroundColor3 = Enabled and Color3.fromRGB(0, 180, 255) or Color3.fromRGB(25, 32, 45)
+            }):Play()
+            
+            TweenService:Create(Dot, TweenInfo.new(0.15), {
+                Position = Enabled and UDim2.new(1, -16, 0.5, -7) or UDim2.new(0, 2, 0.5, -7)
+            }):Play()
+
+            if callback then
+                callback(Enabled)
+            end
         end)
     end
 
     return TabApi
 end
 
+-- Переключение отображения по клавише Insert
 UserInputService.InputBegan:Connect(function(input, gpe)
     if not gpe and input.KeyCode == Enum.KeyCode.Insert then
         MainFrame.Visible = not MainFrame.Visible
