@@ -1,12 +1,14 @@
--- idroMM2.lua (Основное Ядро)
+-- idroMM2.lua — Прокачанное Ядро Thorium Engine v2.0
 local Core = {
-    Version = "1.0.0",
+    Version = "2.0.0",
     Modules = {},
     Events = {},
-    BaseURL = "https://raw.githubusercontent.com/musha9melnykmuhail-bot/1idro/refs/heads/main/ModuleUI"
+    BaseURL = "https://raw.githubusercontent.com/musha9melnykmuhail-bot/1idro/refs/heads/main/"
 }
 
--- Глобальная система событий (Event Bus)
+local HttpService = game:GetService("HttpService")
+
+-- 1. Глобальная система событий (Event Bus)
 function Core.On(eventName, callback)
     Core.Events[eventName] = Core.Events[eventName] or {}
     table.insert(Core.Events[eventName], callback)
@@ -20,71 +22,97 @@ function Core.Emit(eventName, ...)
     end
 end
 
--- Функция загрузки модуля по прямому URL или имени
+-- 2. Универсальный загрузчик модулей
 function Core.LoadModule(moduleIdentifier)
     local url = moduleIdentifier
+    
+    -- Если передали короткое имя (например "Visual"), автоматически подставляем BaseURL
     if not moduleIdentifier:find("http") then
-        url = Core.BaseURL .. moduleIdentifier .. ".lua"
+        url = Core.BaseURL .. moduleIdentifier
     end
 
-    -- 1. HTTP Запрос
+    -- Проверка на повторную загрузку
+    if Core.Modules[moduleIdentifier] then
+        return Core.Modules[moduleIdentifier]
+    end
+
+    -- Скачивание
     local fetchSuccess, scriptContent = pcall(function()
         return game:HttpGet(url)
     end)
 
     if not fetchSuccess or not scriptContent or scriptContent == "" then
-        warn("[Core Error] Не удалось скачать модуль: " .. tostring(moduleIdentifier))
+        warn("[Thorium Core] Ошибка скачивания модуля: " .. tostring(moduleIdentifier))
         return nil
     end
 
-    -- 2. Компиляция
+    -- Компиляция
     local compileSuccess, moduleLoader = pcall(loadstring, scriptContent)
     if not compileSuccess or type(moduleLoader) ~= "function" then
-        warn("[Core Error] Ошибка синтаксиса в модуле " .. tostring(moduleIdentifier))
+        warn("[Thorium Core] Ошибка синтаксиса в модуле: " .. tostring(moduleIdentifier))
         return nil
     end
 
-    -- 3. Выполнение
+    -- Выполнение
     local execSuccess, moduleData = pcall(moduleLoader)
     if not execSuccess or type(moduleData) ~= "table" then
-        warn("[Core Error] Модуль " .. tostring(moduleIdentifier) .. " не вернул таблицу!")
+        warn("[Thorium Core] Модуль " .. tostring(moduleIdentifier) .. " не вернул таблицу!")
         return nil
     end
 
-    -- 4. Регистрация и Инициализация
+    -- Регистрация
     local moduleName = moduleData.Name or moduleIdentifier
     Core.Modules[moduleName] = moduleData
 
+    -- Авто-инициализация
     if type(moduleData.Init) == "function" then
         local initSuccess, err = pcall(moduleData.Init, Core)
         if not initSuccess then
-            warn("[Core Error] Ошибка при Init() в " .. moduleName .. ": " .. tostring(err))
+            warn("[Thorium Core] Ошибка в Init() у " .. moduleName .. ": " .. tostring(err))
         end
     end
 
     Core.Emit("ModuleLoaded", moduleName, moduleData)
-    print("[Core] Модуль успешно подключен: " .. moduleName)
+    print("[Thorium Core] Модуль подгружен: " .. moduleName)
     return moduleData
 end
 
--- Функция отгрузки модуля
+-- 3. Выгрузка модуля
 function Core.UnloadModule(moduleName)
     local module = Core.Modules[moduleName]
     if module then
-        if type(module.Toggle) == "function" then
-            pcall(module.Toggle, false)
+        if type(module.Unload) == "function" then
+            pcall(module.Unload)
         end
         Core.Modules[moduleName] = nil
         Core.Emit("ModuleUnloaded", moduleName)
-        print("[Core] Модуль выгружен: " .. moduleName)
+        print("[Thorium Core] Модуль выгружен: " .. moduleName)
     end
 end
 
--- Загружаем модуль UI при старте ядра
-local UIModule = Core.LoadModule("https://raw.githubusercontent.com/musha9melnykmuhail-bot/1idro/refs/heads/main/ModuleUI")
-
-if UIModule then
-    print("[Core] Система успешно инициализирована с модулем UI.")
+-- 4. Система Сохранения / Загрузки Конфигов
+function Core.SaveConfig(fileName, data)
+    if writefile then
+        local success, err = pcall(function()
+            writefile(fileName .. ".json", HttpService:JSONEncode(data))
+        end)
+        if success then
+            print("[Thorium Core] Конфиг сохранен: " .. fileName)
+        end
+    end
 end
 
+function Core.LoadConfig(fileName)
+    if readfile and isfile and isfile(fileName .. ".json") then
+        local success, result = pcall(function()
+            return HttpService:JSONDecode(readfile(fileName .. ".json"))
+        end)
+        if success then
+            return result
+        end
+    end
+    return nil
+end
+
+print("[Thorium Core v2.0] Ядро успешно инициализировано!")
 return Core
