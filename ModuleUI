@@ -1,177 +1,176 @@
--- ModuleUI.lua
-local UIModule = {
-    Name = "ModuleUI",
-    Version = "1.0.0",
-    Enabled = true,
-    ScreenGui = nil,
-    MainFrame = nil,
-    TabContainer = nil,
-    ContentContainer = nil,
-    Tabs = {},
-    ActiveTab = nil
-}
-
+-- ModuleUI.lua — Современный кастомный интерфейс
+local ModuleUI = {}
 local CoreGui = game:GetService("CoreGui")
+local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 
-function UIModule.CreateGui()
-    if UIModule.ScreenGui then UIModule.ScreenGui:Destroy() end
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "ThoriumUI"
+ScreenGui.ResetOnSpawn = false
 
-    local screen = Instance.new("ScreenGui")
-    screen.Name = "ThoriumUI_Core"
-    screen.ResetOnSpawn = false
-    
-    if syn and syn.protect_gui then
-        syn.protect_gui(screen)
-        screen.Parent = CoreGui
-    elseif gethui then
-        screen.Parent = gethui()
-    else
-        screen.Parent = CoreGui
-    end
-    UIModule.ScreenGui = screen
-
-    local main = Instance.new("Frame")
-    main.Name = "MainFrame"
-    main.Size = UDim2.new(0, 500, 0, 320)
-    main.Position = UDim2.new(0.5, -250, 0.5, -160)
-    main.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
-    main.BorderSizePixel = 0
-    main.Active = true
-    main.Draggable = true
-    main.Parent = screen
-
-    local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, 6)
-    corner.Parent = main
-
-    local title = Instance.new("TextLabel")
-    title.Size = UDim2.new(1, -20, 0, 30)
-    title.Position = UDim2.new(0, 10, 0, 5)
-    title.Text = "THORIUM CORE"
-    title.TextColor3 = Color3.fromRGB(255, 255, 255)
-    title.TextXAlignment = Enum.TextXAlignment.Left
-    title.Font = Enum.Font.SourceSansBold
-    title.TextSize = 16
-    title.BackgroundTransparency = 1
-    title.Parent = main
-
-    local tabContainer = Instance.new("Frame")
-    tabContainer.Size = UDim2.new(0, 120, 1, -45)
-    tabContainer.Position = UDim2.new(0, 10, 0, 35)
-    tabContainer.BackgroundColor3 = Color3.fromRGB(15, 15, 18)
-    tabContainer.BorderSizePixel = 0
-    tabContainer.Parent = main
-
-    local tabLayout = Instance.new("UIListLayout")
-    tabLayout.Padding = UDim.new(0, 4)
-    tabLayout.Parent = tabContainer
-
-    UIModule.TabContainer = tabContainer
-
-    local contentContainer = Instance.new("Frame")
-    contentContainer.Size = UDim2.new(1, -150, 1, -45)
-    contentContainer.Position = UDim2.new(0, 140, 0, 35)
-    contentContainer.BackgroundColor3 = Color3.fromRGB(15, 15, 18)
-    contentContainer.BorderSizePixel = 0
-    contentContainer.Parent = main
-
-    UIModule.ContentContainer = contentContainer
-    UIModule.MainFrame = main
-
-    UserInputService.InputBegan:Connect(function(input, gpe)
-        if not gpe and input.KeyCode == Enum.KeyCode.Insert then
-            UIModule.Toggle(not UIModule.Enabled)
-        end
-    end)
+-- Защита от обнаружения и конфликтов
+if gethui then
+    ScreenGui.Parent = gethui()
+elseif syn and syn.protect_gui then
+    syn.protect_gui(ScreenGui)
+    ScreenGui.Parent = CoreGui
+else
+    ScreenGui.Parent = CoreGui
 end
 
-function UIModule.Init(Core)
-    UIModule.CreateGui()
-end
+-- Главное окно
+local MainFrame = Instance.new("Frame")
+MainFrame.Name = "MainFrame"
+MainFrame.Size = UDim2.new(0, 520, 0, 340)
+MainFrame.Position = UDim2.new(0.5, -260, 0.5, -170)
+MainFrame.BackgroundColor3 = Color3.fromRGB(18, 18, 22)
+MainFrame.BorderSizePixel = 0
+MainFrame.Active = true
+MainFrame.Draggable = true
+MainFrame.Parent = ScreenGui
 
-function UIModule.CreateTab(tabName)
-    if UIModule.Tabs[tabName] then return UIModule.Tabs[tabName] end
+local MainCorner = Instance.new("UICorner")
+MainCorner.CornerRadius = UDim.new(0, 6)
+MainCorner.Parent = MainFrame
 
-    local tabBtn = Instance.new("TextButton")
-    tabBtn.Size = UDim2.new(1, 0, 0, 30)
-    tabBtn.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
-    tabBtn.Text = tabName
-    tabBtn.TextColor3 = Color3.fromRGB(180, 180, 180)
-    tabBtn.Font = Enum.Font.SourceSans
-    tabBtn.TextSize = 14
-    tabBtn.Parent = UIModule.TabContainer
+-- Шапка
+local TopBar = Instance.new("Frame")
+TopBar.Size = UDim2.new(1, 0, 0, 35)
+TopBar.BackgroundColor3 = Color3.fromRGB(24, 24, 30)
+TopBar.BorderSizePixel = 0
+TopBar.Parent = MainFrame
 
-    local page = Instance.new("ScrollingFrame")
-    page.Size = UDim2.new(1, -10, 1, -10)
-    page.Position = UDim2.new(0, 5, 0, 5)
-    page.BackgroundTransparency = 1
-    page.Visible = false
-    page.ScrollBarThickness = 3
-    page.Parent = UIModule.ContentContainer
+local TopCorner = Instance.new("UICorner")
+TopCorner.CornerRadius = UDim.new(0, 6)
+TopCorner.Parent = TopBar
 
-    local pageLayout = Instance.new("UIListLayout")
-    pageLayout.Padding = UDim.new(0, 6)
-    pageLayout.Parent = page
+local Title = Instance.new("TextLabel")
+Title.Text = "  Thorium Lib  |  v2.0"
+Title.Size = UDim2.new(1, 0, 1, 0)
+Title.BackgroundTransparency = 1
+Title.TextColor3 = Color3.fromRGB(220, 220, 230)
+Title.TextXAlignment = Enum.TextXAlignment.Left
+Title.Font = Enum.Font.SourceSansBold
+Title.TextSize = 16
+Title.Parent = TopBar
 
-    local Tab = { Page = page, Button = tabBtn }
+-- Боковая панель вкладок
+local TabHolder = Instance.new("Frame")
+TabHolder.Size = UDim2.new(0, 130, 1, -35)
+TabHolder.Position = UDim2.new(0, 0, 0, 35)
+TabHolder.BackgroundColor3 = Color3.fromRGB(22, 22, 28)
+TabHolder.BorderSizePixel = 0
+TabHolder.Parent = MainFrame
 
-    tabBtn.MouseButton1Click:Connect(function()
-        for _, t in pairs(UIModule.Tabs) do
-            t.Page.Visible = false
-            t.Button.TextColor3 = Color3.fromRGB(180, 180, 180)
+local TabList = Instance.new("UIListLayout")
+TabList.SortOrder = Enum.SortOrder.LayoutOrder
+TabList.Padding = UDim.new(0, 4)
+TabList.Parent = TabHolder
+
+-- Контейнер страниц
+local PageHolder = Instance.new("Frame")
+PageHolder.Size = UDim2.new(1, -140, 1, -45)
+PageHolder.Position = UDim2.new(0, 135, 0, 40)
+PageHolder.BackgroundTransparency = 1
+PageHolder.Parent = MainFrame
+
+local Pages = {}
+local FirstTab = true
+
+function ModuleUI.CreateTab(tabName)
+    local Page = Instance.new("ScrollingFrame")
+    Page.Size = UDim2.new(1, 0, 1, 0)
+    Page.BackgroundTransparency = 1
+    Page.BorderSizePixel = 0
+    Page.ScrollBarThickness = 3
+    Page.Visible = FirstTab
+    Page.Parent = PageHolder
+
+    local PageList = Instance.new("UIListLayout")
+    PageList.SortOrder = Enum.SortOrder.LayoutOrder
+    PageList.Padding = UDim.new(0, 6)
+    PageList.Parent = Page
+
+    local TabBtn = Instance.new("TextButton")
+    TabBtn.Size = UDim2.new(1, -10, 0, 30)
+    TabBtn.Position = UDim2.new(0, 5, 0, 0)
+    TabBtn.BackgroundColor3 = FirstTab and Color3.fromRGB(35, 35, 45) or Color3.fromRGB(25, 25, 32)
+    TabBtn.Text = tabName
+    TabBtn.TextColor3 = Color3.fromRGB(200, 200, 210)
+    TabBtn.Font = Enum.Font.SourceSansSemiBold
+    TabBtn.TextSize = 14
+    TabBtn.Parent = TabHolder
+
+    local BtnCorner = Instance.new("UICorner")
+    BtnCorner.CornerRadius = UDim.new(0, 4)
+    BtnCorner.Parent = TabBtn
+
+    TabBtn.MouseButton1Click:Connect(function()
+        for _, p in pairs(PageHolder:GetChildren()) do
+            p.Visible = false
         end
-        page.Visible = true
-        tabBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+        for _, b in pairs(TabHolder:GetChildren()) do
+            if b:IsA("TextButton") then
+                b.BackgroundColor3 = Color3.fromRGB(25, 25, 32)
+            end
+        end
+        Page.Visible = true
+        TabBtn.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
     end)
 
-    if not UIModule.ActiveTab then
-        UIModule.ActiveTab = Tab
-        page.Visible = true
-        tabBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    end
+    FirstTab = false
 
-    function Tab:AddToggle(title, defaultState, callback)
-        local toggleFrame = Instance.new("Frame")
-        toggleFrame.Size = UDim2.new(1, 0, 0, 30)
-        toggleFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
-        toggleFrame.Parent = page
+    local TabApi = {}
 
-        local label = Instance.new("TextLabel")
-        label.Size = UDim2.new(1, -40, 1, 0)
-        label.Position = UDim2.new(0, 10, 0, 0)
-        label.Text = title
-        label.TextColor3 = Color3.fromRGB(255, 255, 255)
-        label.TextXAlignment = Enum.TextXAlignment.Left
-        label.BackgroundTransparency = 1
-        label.Font = Enum.Font.SourceSans
-        label.TextSize = 14
-        label.Parent = toggleFrame
+    function TabApi:AddToggle(text, default, callback)
+        local Enabled = default or false
 
-        local btn = Instance.new("TextButton")
-        btn.Size = UDim2.new(0, 20, 0, 20)
-        btn.Position = UDim2.new(1, -25, 0.5, -10)
-        btn.Text = ""
-        btn.BackgroundColor3 = defaultState and Color3.fromRGB(0, 170, 255) or Color3.fromRGB(50, 50, 60)
-        btn.Parent = toggleFrame
+        local ToggleFrame = Instance.new("Frame")
+        ToggleFrame.Size = UDim2.new(1, -10, 0, 32)
+        ToggleFrame.BackgroundColor3 = Color3.fromRGB(26, 26, 34)
+        ToggleFrame.BorderSizePixel = 0
+        ToggleFrame.Parent = Page
 
-        local state = defaultState or false
-        btn.MouseButton1Click:Connect(function()
-            state = not state
-            btn.BackgroundColor3 = state and Color3.fromRGB(0, 170, 255) or Color3.fromRGB(50, 50, 60)
-            if callback then callback(state) end
+        local ToggleCorner = Instance.new("UICorner")
+        ToggleCorner.CornerRadius = UDim.new(0, 4)
+        ToggleCorner.Parent = ToggleFrame
+
+        local Label = Instance.new("TextLabel")
+        Label.Text = "  " .. text
+        Label.Size = UDim2.new(0.7, 0, 1, 0)
+        Label.BackgroundTransparency = 1
+        Label.TextColor3 = Color3.fromRGB(200, 200, 210)
+        Label.TextXAlignment = Enum.TextXAlignment.Left
+        Label.Font = Enum.Font.SourceSans
+        Label.TextSize = 14
+        Label.Parent = ToggleFrame
+
+        local Btn = Instance.new("TextButton")
+        Btn.Size = UDim2.new(0, 20, 0, 20)
+        Btn.Position = UDim2.new(1, -26, 0.5, -10)
+        Btn.BackgroundColor3 = Enabled and Color3.fromRGB(115, 80, 255) or Color3.fromRGB(45, 45, 55)
+        Btn.Text = ""
+        Btn.Parent = ToggleFrame
+
+        local BtnC = Instance.new("UICorner")
+        BtnC.CornerRadius = UDim.new(0, 4)
+        BtnC.Parent = Btn
+
+        Btn.MouseButton1Click:Connect(function()
+            Enabled = not Enabled
+            Btn.BackgroundColor3 = Enabled and Color3.fromRGB(115, 80, 255) or Color3.fromRGB(45, 45, 55)
+            callback(Enabled)
         end)
     end
 
-    UIModule.Tabs[tabName] = Tab
-    return Tab
+    return TabApi
 end
 
-function UIModule.Toggle(state)
-    UIModule.Enabled = state
-    if UIModule.MainFrame then
-        UIModule.MainFrame.Visible = state
+-- Переключение отображения по клавише Insert
+UserInputService.InputBegan:Connect(function(input, gpe)
+    if not gpe and input.KeyCode == Enum.KeyCode.Insert then
+        MainFrame.Visible = not MainFrame.Visible
     end
-end
+end)
 
-return UIModule
+return ModuleUI
