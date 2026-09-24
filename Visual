@@ -1,164 +1,171 @@
--- ESP.lua (Модуль визуалов и логики ESP)
-local ESPModule = {
-    Name = "ESP",
-    Version = "1.0.0",
-    Enabled = true,
-    Settings = {
-        Boxes = false,
-        Tracers = false,
-        Names = false,
-        Health = false,
-        Distance = false
-    },
-    Cache = {}
+-- Visual.lua — Точный ESP с ровной геометрией и Highlight
+local VisualModule = {}
+
+VisualModule.Settings = {
+    Boxes = false,
+    Highlights = false,
+    Tracers = false,
+    Names = false,
+    Health = false,
+    Distance = false
 }
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
-local Camera = workspace.CurrentCamera
 local LocalPlayer = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
 
-local function CreateDrawings(player)
-    if ESPModule.Cache[player] then return end
+local Drawings = {}
+
+local function ClearDrawing(plr)
+    if Drawings[plr] then
+        for _, obj in pairs(Drawings[plr]) do
+            if typeof(obj) == "Instance" then
+                obj:Destroy()
+            elseif obj.Remove then
+                obj:Remove()
+            end
+        end
+        Drawings[plr] = nil
+    end
+end
+
+local function CreateESP(plr)
+    if plr == LocalPlayer then return end
 
     local box = Drawing.new("Square")
-    box.Thickness = 1
+    box.Thickness = 1.5
     box.Filled = false
-    box.Color = Color3.fromRGB(255, 0, 0)
+    box.Color = Color3.fromRGB(255, 255, 255)
     box.Visible = false
 
     local tracer = Drawing.new("Line")
     tracer.Thickness = 1
-    tracer.Color = Color3.fromRGB(255, 255, 0)
+    tracer.Color = Color3.fromRGB(255, 255, 255)
     tracer.Visible = false
 
     local name = Drawing.new("Text")
+    name.Text = plr.Name
     name.Size = 14
     name.Center = true
     name.Outline = true
     name.Color = Color3.fromRGB(255, 255, 255)
     name.Visible = false
 
-    local health = Drawing.new("Text")
-    health.Size = 12
-    health.Center = true
-    health.Outline = true
-    health.Color = Color3.fromRGB(0, 255, 0)
-    health.Visible = false
+    local healthBar = Drawing.new("Line")
+    healthBar.Thickness = 2
+    healthBar.Color = Color3.fromRGB(0, 255, 0)
+    healthBar.Visible = false
 
-    local dist = Drawing.new("Text")
-    dist.Size = 12
-    dist.Center = true
-    dist.Outline = true
-    dist.Color = Color3.fromRGB(200, 200, 200)
-    dist.Visible = false
+    local highlight = Instance.new("Highlight")
+    highlight.Name = "ESPHighlight"
+    highlight.FillColor = Color3.fromRGB(115, 80, 255)
+    highlight.FillTransparency = 0.5
+    highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+    highlight.OutlineTransparency = 0
+    highlight.Enabled = false
 
-    ESPModule.Cache[player] = {
+    Drawings[plr] = {
         Box = box,
         Tracer = tracer,
         Name = name,
-        Health = health,
-        Distance = dist
+        Health = healthBar,
+        Highlight = highlight
     }
 end
 
-local function RemoveDrawings(player)
-    if ESPModule.Cache[player] then
-        for _, obj in pairs(ESPModule.Cache[player]) do
-            obj:Remove()
-        end
-        ESPModule.Cache[player] = nil
-    end
-end
-
-function ESPModule.Init(Core)
-    print("[ESP Module] Запуск системы отрисовки...")
-
-    for _, player in ipairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer then CreateDrawings(player) end
+function VisualModule.Init()
+    for _, plr in pairs(Players:GetPlayers()) do
+        CreateESP(plr)
     end
 
-    Players.PlayerAdded:Connect(function(player)
-        if player ~= LocalPlayer then CreateDrawings(player) end
-    end)
-
-    Players.PlayerRemoving:Connect(RemoveDrawings)
+    Players.PlayerAdded:Connect(CreateESP)
+    Players.PlayerRemoving:Connect(ClearDrawing)
 
     RunService.RenderStepped:Connect(function()
-        for player, draw in pairs(ESPModule.Cache) do
-            local char = player.Character
-            local hrp = char and char:FindFirstChild("HumanoidRootPart")
+        for plr, draw in pairs(Drawings) do
+            local char = plr.Character
             local hum = char and char:FindFirstChildOfClass("Humanoid")
+            local root = char and char:FindFirstChild("HumanoidRootPart")
 
-            if hrp and hum and hum.Health > 0 then
-                local pos, onScreen = Camera:WorldToViewportPoint(hrp.Position)
+            if char and hum and root and hum.Health > 0 then
+                -- Подсветка персонажа (Highlight)
+                if draw.Highlight then
+                    draw.Highlight.Parent = char
+                    draw.Highlight.Enabled = VisualModule.Settings.Highlights
+                end
+
+                -- Точный расчёт bounding box по модели персонажа
+                local cframe, size = char:GetBoundingBox()
+                local screenPos, onScreen = Camera:WorldToViewportPoint(cframe.Position)
 
                 if onScreen then
-                    local scale = 1000 / pos.Z
-                    local width = 30 * scale
-                    local height = 50 * scale
+                    -- Расчет правильных размеров 2D рамки
+                    local topWorld = cframe.Position + Vector3.new(0, size.Y / 2, 0)
+                    local bottomWorld = cframe.Position - Vector3.new(0, size.Y / 2, 0)
 
-                    -- 1. Boxes
-                    if ESPModule.Settings.Boxes then
-                        draw.Box.Size = Vector2.new(width, height)
-                        draw.Box.Position = Vector2.new(pos.X - width / 2, pos.Y - height / 2)
+                    local topScreen = Camera:WorldToViewportPoint(topWorld)
+                    local bottomScreen = Camera:WorldToViewportPoint(bottomWorld)
+
+                    local boxHeight = math.abs(topScreen.Y - bottomScreen.Y)
+                    local boxWidth = boxHeight / 1.6
+
+                    -- 1. Box ESP
+                    if VisualModule.Settings.Boxes then
+                        draw.Box.Size = Vector2.new(boxWidth, boxHeight)
+                        draw.Box.Position = Vector2.new(topScreen.X - boxWidth / 2, topScreen.Y)
                         draw.Box.Visible = true
                     else
                         draw.Box.Visible = false
                     end
 
-                    -- 2. Tracers
-                    if ESPModule.Settings.Tracers then
+                    -- 2. Tracers (Линии от низа экрана)
+                    if VisualModule.Settings.Tracers then
                         draw.Tracer.From = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y)
-                        draw.Tracer.To = Vector2.new(pos.X, pos.Y + height / 2)
+                        draw.Tracer.To = Vector2.new(bottomScreen.X, bottomScreen.Y)
                         draw.Tracer.Visible = true
                     else
                         draw.Tracer.Visible = false
                     end
 
-                    -- 3. Names
-                    if ESPModule.Settings.Names then
-                        draw.Name.Text = player.Name
-                        draw.Name.Position = Vector2.new(pos.X, pos.Y - height / 2 - 16)
+                    -- 3. Names & Distance
+                    if VisualModule.Settings.Names then
+                        local distText = VisualModule.Settings.Distance and string.format(" [%d m]", (root.Position - Camera.CFrame.Position).Magnitude) or ""
+                        draw.Name.Text = plr.Name .. distText
+                        draw.Name.Position = Vector2.new(topScreen.X, topScreen.Y - 18)
                         draw.Name.Visible = true
                     else
                         draw.Name.Visible = false
                     end
 
-                    -- 4. Health
-                    if ESPModule.Settings.Health then
-                        draw.Health.Text = "HP: " .. math.floor(hum.Health)
-                        draw.Health.Position = Vector2.new(pos.X, pos.Y + height / 2 + 2)
+                    -- 4. Health Bar (Полоска HP сбоку)
+                    if VisualModule.Settings.Health then
+                        local hpPercent = math.clamp(hum.Health / hum.MaxHealth, 0, 1)
+                        local barX = topScreen.X - (boxWidth / 2) - 5
+                        local barTopY = bottomScreen.Y - (boxHeight * hpPercent)
+
+                        draw.Health.From = Vector2.new(barX, bottomScreen.Y)
+                        draw.Health.To = Vector2.new(barX, barTopY)
+                        draw.Health.Color = Color3.fromRGB(255 - (hpPercent * 255), hpPercent * 255, 0)
                         draw.Health.Visible = true
                     else
                         draw.Health.Visible = false
-                    end
-
-                    -- 5. Distance
-                    if ESPModule.Settings.Distance then
-                        local distance = math.floor((hrp.Position - Camera.CFrame.Position).Magnitude)
-                        draw.Distance.Text = distance .. "m"
-                        draw.Distance.Position = Vector2.new(pos.X, pos.Y + height / 2 + 16)
-                        draw.Distance.Visible = true
-                    else
-                        draw.Distance.Visible = false
                     end
                 else
                     draw.Box.Visible = false
                     draw.Tracer.Visible = false
                     draw.Name.Visible = false
                     draw.Health.Visible = false
-                    draw.Distance.Visible = false
                 end
             else
                 draw.Box.Visible = false
                 draw.Tracer.Visible = false
                 draw.Name.Visible = false
                 draw.Health.Visible = false
-                draw.Distance.Visible = false
+                if draw.Highlight then draw.Highlight.Enabled = false end
             end
         end
     end)
 end
 
-return ESPModule
+return VisualModule
