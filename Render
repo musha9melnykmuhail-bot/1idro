@@ -1,40 +1,43 @@
--- Render — Единая точка запуска
-local Core = loadstring(game:HttpGet("https://raw.githubusercontent.com/musha9melnykmuhail-bot/1idro/refs/heads/main/idroMM2"))()
+-- Render — Связующий лоадер для Thorium
+local ModuleUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/musha9melnykmuhail-bot/1idro/refs/heads/main/ModuleUI"))()
 
-if not Core then
-    return warn("[Thorium] Ошибка: Ядро не загрузилось!")
+if not ModuleUI then
+    return warn("[Thorium] Ошибка: Не удалось загрузить ModuleUI!")
 end
 
--- Явно качаем каждый модуль по очереди
-local UI = Core.LoadModule("ModuleUI")
-local Visual = Core.LoadModule("Visual")
-local Combat = Core.LoadModule("Combat")
+print("[Thorium] Инициализация интерфейса...")
 
-if not UI then
-    return warn("[Thorium] Ошибка: ModuleUI не загрузился!")
-end
+-- 1. Создаем вкладку Combat
+local CombatTab = ModuleUI.CreateTab("Combat")
+CombatTab:AddToggle("Aimbot (Hold RMB)", false, function(state)
+    print("Aimbot:", state)
+end)
+CombatTab:AddToggle("Silent Aim", false, function(state)
+    print("Silent Aim:", state)
+end)
+CombatTab:AddToggle("Draw FOV Circle", false, function(state)
+    print("FOV Circle:", state)
+end)
+CombatTab:AddToggle("Wall Check", false, function(state)
+    print("Wall Check:", state)
+end)
 
-print("[Thorium] Создаем вкладки интерфейса...")
+-- 2. Создаем вкладку Visuals
+local VisualTab = ModuleUI.CreateTab("Visuals")
+VisualTab:AddToggle("Box ESP", false, function(state)
+    print("Box ESP:", state)
+end)
+VisualTab:AddToggle("Chams Highlight", false, function(state)
+    print("Chams Highlight:", state)
+end)
+VisualTab:AddToggle("Tracers", false, function(state)
+    print("Tracers:", state)
+end)
+VisualTab:AddToggle("Player Names", false, function(state)
+    print("Player Names:", state)
+end)
+VisualTab:AddToggle("Health Bar", false, function(state)
+    print("Health Bar:", state)
+end)
 
--- 1. Вкладка COMBAT
-if Combat then
-    local CombatTab = UI.CreateTab("Combat")
-    CombatTab:AddToggle("Aimbot (Hold RMB)", false, function(s) Combat.Settings.Aimbot = s end)
-    CombatTab:AddToggle("Silent Aim", false, function(s) Combat.Settings.SilentAim = s end)
-    CombatTab:AddToggle("Draw FOV Circle", false, function(s) Combat.Settings.ShowFOV = s end)
-    CombatTab:AddToggle("Wall Check", false, function(s) Combat.Settings.WallCheck = s end)
-    CombatTab:AddToggle("Target Lock", false, function(s) Combat.Settings.TargetLock = s end)
-end
-
--- 2. Вкладка VISUALS
-if Visual then
-    local VisualTab = UI.CreateTab("Visuals")
-    VisualTab:AddToggle("Box ESP", false, function(s) Visual.Settings.Boxes = s end)
-    VisualTab:AddToggle("Chams Highlight", false, function(s) Visual.Settings.Highlights = s end)
-    VisualTab:AddToggle("Tracers", false, function(s) Visual.Settings.Tracers = s end)
-    VisualTab:AddToggle("Player Names", false, function(s) Visual.Settings.Names = s end)
-    VisualTab:AddToggle("Health Bar", false, function(s) Visual.Settings.Health = s end)
-    VisualTab:AddToggle("Distance", false, function(s) Visual.Settings.Distance = s end)
-end
-
-print("[Thorium Engine v2.0] Запуск завершен! Нажмите INSERT для открытия/закрытия.")
+print("[Thorium] Меню успешно открыто! Нажмите INSERT для скрытия/показа.")
