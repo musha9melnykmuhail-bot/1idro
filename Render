@@ -1,35 +1,20 @@
--- 1. Загружаем основное Ядро
+-- Render — Связка всех модулей Thorium
 local Core = loadstring(game:HttpGet("https://raw.githubusercontent.com/musha9melnykmuhail-bot/1idro/refs/heads/main/idroMM2"))()
 
--- 2. Подгружаем модуль визуалов по твоей ссылке
-local Visual = Core.LoadModule("https://raw.githubusercontent.com/musha9melnykmuhail-bot/1idro/refs/heads/main/Visual")
+if not Core then return end
 
--- 3. Достаем подгруженное ядром меню
+local Visual = Core.LoadModule("https://raw.githubusercontent.com/musha9melnykmuhail-bot/1idro/refs/heads/main/Visual")
 local UI = Core.Modules["ModuleUI"]
 
--- 4. Автоматически создаем вкладку в UI и связываем кнопки с настройками визуалов
 if UI and Visual then
     local VisualTab = UI.CreateTab("Visuals")
 
-    VisualTab:AddToggle("Box ESP", false, function(state)
-        Visual.Settings.Boxes = state
-    end)
+    VisualTab:AddToggle("Box ESP", false, function(s) Visual.Settings.Boxes = s end)
+    VisualTab:AddToggle("Chams Highlight", false, function(s) Visual.Settings.Highlights = s end)
+    VisualTab:AddToggle("Tracers", false, function(s) Visual.Settings.Tracers = s end)
+    VisualTab:AddToggle("Player Names", false, function(s) Visual.Settings.Names = s end)
+    VisualTab:AddToggle("Health Bar", false, function(s) Visual.Settings.Health = s end)
+    VisualTab:AddToggle("Distance", false, function(s) Visual.Settings.Distance = s end)
 
-    VisualTab:AddToggle("Tracers", false, function(state)
-        Visual.Settings.Tracers = state
-    end)
-
-    VisualTab:AddToggle("Player Names", false, function(state)
-        Visual.Settings.Names = state
-    end)
-
-    VisualTab:AddToggle("Health Bar", false, function(state)
-        Visual.Settings.Health = state
-    end)
-
-    VisualTab:AddToggle("Distance", false, function(state)
-        Visual.Settings.Distance = state
-    end)
-
-    print("[Main] Модуль Visuals успешно привязан к меню!")
+    print("[Thorium Engine] Модули успешно пересобраны и запущены!")
 end
